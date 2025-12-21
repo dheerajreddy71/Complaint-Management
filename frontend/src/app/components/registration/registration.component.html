@@ -1,0 +1,129 @@
+<div class="auth-container">
+	<div class="auth-card fade-in">
+		<div class="auth-header">
+			<div class="logo">
+				<mat-icon>support_agent</mat-icon>
+			</div>
+			<h1>Create Account</h1>
+			<p>Join the Complaint Portal today</p>
+		</div>
+
+		<form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="auth-form">
+			<mat-form-field appearance="outline" class="full-width">
+				<mat-label>Full Name</mat-label>
+				<input
+					matInput
+					type="text"
+					formControlName="name"
+					placeholder="Enter your name"
+				/>
+				<mat-icon matPrefix>person</mat-icon>
+				<mat-error *ngIf="registerForm.get('name')?.invalid">
+					{{ getErrorMessage("name") }}
+				</mat-error>
+			</mat-form-field>
+
+			<mat-form-field appearance="outline" class="full-width">
+				<mat-label>Email Address</mat-label>
+				<input
+					matInput
+					type="email"
+					formControlName="email"
+					placeholder="Enter your email"
+				/>
+				<mat-icon matPrefix>email</mat-icon>
+				<mat-error *ngIf="registerForm.get('email')?.invalid">
+					{{ getErrorMessage("email") }}
+				</mat-error>
+			</mat-form-field>
+
+			<div class="form-row">
+				<mat-form-field appearance="outline">
+					<mat-label>Password</mat-label>
+					<input
+						matInput
+						[type]="hidePassword ? 'password' : 'text'"
+						formControlName="password"
+						placeholder="Create password"
+					/>
+					<mat-icon matPrefix>lock</mat-icon>
+					<button
+						mat-icon-button
+						matSuffix
+						type="button"
+						(click)="hidePassword = !hidePassword"
+					>
+						<mat-icon>{{
+							hidePassword ? "visibility_off" : "visibility"
+						}}</mat-icon>
+					</button>
+					<mat-error *ngIf="registerForm.get('password')?.invalid">
+						{{ getErrorMessage("password") }}
+					</mat-error>
+				</mat-form-field>
+
+				<mat-form-field appearance="outline">
+					<mat-label>Confirm Password</mat-label>
+					<input
+						matInput
+						[type]="hideConfirmPassword ? 'password' : 'text'"
+						formControlName="confirmPassword"
+						placeholder="Confirm password"
+					/>
+					<mat-icon matPrefix>lock_outline</mat-icon>
+					<button
+						mat-icon-button
+						matSuffix
+						type="button"
+						(click)="hideConfirmPassword = !hideConfirmPassword"
+					>
+						<mat-icon>{{
+							hideConfirmPassword ? "visibility_off" : "visibility"
+						}}</mat-icon>
+					</button>
+					<mat-error *ngIf="registerForm.get('confirmPassword')?.invalid">
+						{{ getErrorMessage("confirmPassword") }}
+					</mat-error>
+				</mat-form-field>
+			</div>
+
+			<!-- Password Strength Indicator -->
+			<app-password-strength
+				[password]="registerForm.get('password')?.value || ''"
+				[showFeedback]="true"
+			>
+			</app-password-strength>
+
+			<!-- Role is now hidden - all registrations are User role. Admin assigns Staff/Admin roles. -->
+
+			<mat-form-field appearance="outline" class="full-width">
+				<mat-label>Contact Info (Optional)</mat-label>
+				<input
+					matInput
+					type="text"
+					formControlName="contact_info"
+					placeholder="Phone number or alternate email"
+				/>
+				<mat-icon matPrefix>phone</mat-icon>
+				<mat-error *ngIf="registerForm.get('contact_info')?.invalid">
+					{{ getErrorMessage("contact_info") }}
+				</mat-error>
+			</mat-form-field>
+
+			<button
+				mat-raised-button
+				color="primary"
+				type="submit"
+				class="submit-btn full-width"
+				[disabled]="isLoading"
+			>
+				<mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
+				<span *ngIf="!isLoading">Create Account</span>
+			</button>
+		</form>
+
+		<div class="auth-footer">
+			<p>Already have an account? <a routerLink="/login">Sign in</a></p>
+		</div>
+	</div>
+</div>
