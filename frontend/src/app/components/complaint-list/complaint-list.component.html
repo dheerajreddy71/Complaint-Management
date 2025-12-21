@@ -1,0 +1,181 @@
+<div class="complaint-list-container">
+	<!-- Page Header -->
+	<div class="page-header">
+		<div class="header-content">
+			<div class="header-text">
+				<h1>My Complaints</h1>
+				<p>Track and manage your submitted complaints</p>
+			</div>
+			<button
+				mat-raised-button
+				color="primary"
+				(click)="createNew()"
+				class="new-btn"
+			>
+				<mat-icon>add</mat-icon>
+				New Complaint
+			</button>
+		</div>
+	</div>
+
+	<!-- Filters Section -->
+	<div class="filters-section">
+		<mat-form-field appearance="outline" class="search-field">
+			<mat-label>Search complaints</mat-label>
+			<input
+				matInput
+				[(ngModel)]="searchQuery"
+				(ngModelChange)="onSearchChange()"
+				placeholder="Search by title, description, or ID"
+			/>
+			<mat-icon matPrefix>search</mat-icon>
+			<button
+				mat-icon-button
+				matSuffix
+				*ngIf="searchQuery"
+				(click)="searchQuery = ''; onSearchChange()"
+			>
+				<mat-icon>close</mat-icon>
+			</button>
+		</mat-form-field>
+
+		<mat-form-field appearance="outline" class="filter-field">
+			<mat-label>Status</mat-label>
+			<mat-select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
+				<mat-option value="all">All Status</mat-option>
+				<mat-option
+					*ngFor="let status of statusOptions.slice(1)"
+					[value]="status"
+				>
+					{{ status }}
+				</mat-option>
+			</mat-select>
+		</mat-form-field>
+
+		<mat-form-field appearance="outline" class="filter-field">
+			<mat-label>Category</mat-label>
+			<mat-select
+				[(ngModel)]="categoryFilter"
+				(ngModelChange)="onFilterChange()"
+			>
+				<mat-option value="all">All Categories</mat-option>
+				<mat-option
+					*ngFor="let category of categoryOptions.slice(1)"
+					[value]="category"
+				>
+					{{ category | titlecase }}
+				</mat-option>
+			</mat-select>
+		</mat-form-field>
+	</div>
+
+	<!-- Loading Spinner -->
+	<div class="loading-container" *ngIf="isLoading">
+		<mat-spinner diameter="50"></mat-spinner>
+		<p>Loading complaints...</p>
+	</div>
+
+	<!-- Empty State -->
+	<div
+		class="empty-state"
+		*ngIf="!isLoading && filteredComplaints.length === 0"
+	>
+		<mat-icon>inbox</mat-icon>
+		<h3>No complaints found</h3>
+		<p *ngIf="complaints.length === 0">
+			You haven't submitted any complaints yet. Click the button above to create
+			your first one.
+		</p>
+		<p *ngIf="complaints.length > 0">
+			No complaints match your current filters. Try adjusting your search
+			criteria.
+		</p>
+		<button
+			mat-raised-button
+			color="primary"
+			(click)="createNew()"
+			*ngIf="complaints.length === 0"
+		>
+			<mat-icon>add</mat-icon>
+			Create First Complaint
+		</button>
+	</div>
+
+	<!-- Complaints Grid -->
+	<div
+		class="complaints-grid"
+		*ngIf="!isLoading && filteredComplaints.length > 0"
+	>
+		<mat-card
+			class="complaint-card fade-in"
+			*ngFor="let complaint of pagedComplaints"
+			(click)="viewDetails(complaint)"
+		>
+			<mat-card-header>
+				<div class="card-header-content">
+					<span class="complaint-id">#{{ complaint.id }}</span>
+					<span
+						class="status-badge"
+						[ngClass]="getStatusClass(complaint.status)"
+					>
+						<mat-icon>{{ getStatusIcon(complaint.status) }}</mat-icon>
+						{{ complaint.status }}
+					</span>
+				</div>
+			</mat-card-header>
+
+			<mat-card-content>
+				<h3 class="complaint-title">{{ complaint.title }}</h3>
+				<p class="complaint-description">
+					{{ complaint.description | slice : 0 : 120
+					}}{{ complaint.description.length > 120 ? "..." : "" }}
+				</p>
+
+				<div class="complaint-meta">
+					<span class="category-badge" [ngClass]="complaint.category">
+						<mat-icon>{{ getCategoryIcon(complaint.category) }}</mat-icon>
+						{{ complaint.category | titlecase }}
+					</span>
+					<span class="date-info">
+						<mat-icon>schedule</mat-icon>
+						{{ formatDate(complaint.created_at) }}
+					</span>
+				</div>
+
+				<div class="staff-info" *ngIf="complaint.staff_name">
+					<mat-icon>engineering</mat-icon>
+					<span>Assigned to: {{ complaint.staff_name }}</span>
+				</div>
+			</mat-card-content>
+
+			<mat-card-actions>
+				<button mat-button color="primary">
+					<mat-icon>visibility</mat-icon>
+					View Details
+				</button>
+			</mat-card-actions>
+		</mat-card>
+	</div>
+
+	<!-- Results Count -->
+	<div
+		class="results-count"
+		*ngIf="!isLoading && filteredComplaints.length > 0"
+	>
+		Showing {{ pagedComplaints.length }} of
+		{{ filteredComplaints.length }} complaints
+	</div>
+
+	<!-- Pagination -->
+	<mat-paginator
+		*ngIf="!isLoading && filteredComplaints.length > 0"
+		[length]="filteredComplaints.length"
+		[pageSize]="pageSize"
+		[pageIndex]="pageIndex"
+		[pageSizeOptions]="pageSizeOptions"
+		(page)="onPageChange($event)"
+		showFirstLastButtons
+		aria-label="Select page"
+	>
+	</mat-paginator>
+</div>

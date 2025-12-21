@@ -1,0 +1,502 @@
+<div class="complaint-details-container">
+	<!-- Loading State -->
+	<div class="loading-container" *ngIf="isLoading">
+		<mat-spinner diameter="50"></mat-spinner>
+		<p>Loading complaint details...</p>
+	</div>
+
+	<!-- New Complaint Form -->
+	<ng-container *ngIf="!isLoading && isNewComplaint">
+		<div class="page-header">
+			<button mat-icon-button (click)="goBack()" class="back-btn">
+				<mat-icon>arrow_back</mat-icon>
+			</button>
+			<div class="header-text">
+				<h1>Submit New Complaint</h1>
+				<p>Describe your issue and we'll help resolve it</p>
+			</div>
+		</div>
+
+		<mat-card class="form-card fade-in">
+			<mat-card-content>
+				<form [formGroup]="complaintForm" (ngSubmit)="onSubmitComplaint()">
+					<mat-form-field appearance="outline" class="full-width">
+						<mat-label>Complaint Title</mat-label>
+						<input
+							matInput
+							formControlName="title"
+							placeholder="Brief summary of the issue"
+						/>
+						<mat-icon matPrefix>title</mat-icon>
+						<mat-hint>Provide a clear, concise title</mat-hint>
+						<mat-error *ngIf="complaintForm.get('title')?.invalid">
+							{{ getErrorMessage(complaintForm, "title") }}
+						</mat-error>
+					</mat-form-field>
+
+					<mat-form-field appearance="outline" class="full-width">
+						<mat-label>Category</mat-label>
+						<mat-select formControlName="category">
+							<mat-option *ngFor="let cat of categories" [value]="cat.value">
+								<mat-icon>{{ cat.icon }}</mat-icon>
+								{{ cat.label }}
+							</mat-option>
+						</mat-select>
+						<mat-icon matPrefix>category</mat-icon>
+						<mat-error *ngIf="complaintForm.get('category')?.invalid">
+							{{ getErrorMessage(complaintForm, "category") }}
+						</mat-error>
+					</mat-form-field>
+
+					<div class="form-row">
+						<mat-form-field appearance="outline" class="half-width">
+							<mat-label>Priority</mat-label>
+							<mat-select formControlName="priority">
+								<mat-option *ngFor="let p of priorities" [value]="p.value">
+									<mat-icon [style.color]="p.color">{{ p.icon }}</mat-icon>
+									{{ p.label }}
+								</mat-option>
+							</mat-select>
+							<mat-icon matPrefix>flag</mat-icon>
+						</mat-form-field>
+
+						<mat-form-field appearance="outline" class="half-width">
+							<mat-label>Location</mat-label>
+							<input
+								matInput
+								formControlName="location"
+								placeholder="e.g., Building A, Room 101"
+							/>
+							<mat-icon matPrefix>location_on</mat-icon>
+						</mat-form-field>
+					</div>
+
+					<mat-form-field appearance="outline" class="full-width">
+						<mat-label>Description</mat-label>
+						<textarea
+							matInput
+							formControlName="description"
+							rows="5"
+							placeholder="Describe the issue in detail"
+						></textarea>
+						<mat-icon matPrefix>description</mat-icon>
+						<mat-hint
+							>Include location, time, and any other relevant details</mat-hint
+						>
+						<mat-error *ngIf="complaintForm.get('description')?.invalid">
+							{{ getErrorMessage(complaintForm, "description") }}
+						</mat-error>
+					</mat-form-field>
+
+					<!-- File Upload Section -->
+					<div class="file-upload-section">
+						<label class="upload-label">Attachment (Optional)</label>
+						<p class="upload-hint">Upload images or PDF files (max 10MB)</p>
+
+						<div class="upload-area" *ngIf="!selectedFile && !uploadedFileUrl">
+							<input
+								type="file"
+								#fileInput
+								(change)="onFileSelected($event)"
+								accept="image/*,.pdf"
+								hidden
+							/>
+							<div class="upload-content" (click)="fileInput.click()">
+								<mat-icon class="upload-icon">cloud_upload</mat-icon>
+								<span class="upload-text"
+									>Click to upload or drag and drop</span
+								>
+								<span class="upload-formats">PNG, JPG, GIF, WebP or PDF</span>
+							</div>
+						</div>
+
+						<div class="file-preview" *ngIf="selectedFile && !uploadedFileUrl">
+							<div class="file-info">
+								<img
+									*ngIf="filePreview && isImageFile()"
+									[src]="filePreview"
+									alt="Preview"
+									class="image-preview"
+								/>
+								<mat-icon *ngIf="!isImageFile()" class="pdf-icon"
+									>picture_as_pdf</mat-icon
+								>
+								<div class="file-details">
+									<span class="file-name">{{ getFileName() }}</span>
+									<span class="file-size">{{ getFileSize() }}</span>
+								</div>
+								<button
+									mat-icon-button
+									type="button"
+									(click)="removeFile()"
+									class="remove-btn"
+									*ngIf="!isUploading"
+								>
+									<mat-icon>close</mat-icon>
+								</button>
+							</div>
+
+							<div class="upload-progress" *ngIf="isUploading">
+								<mat-progress-bar
+									mode="determinate"
+									[value]="uploadProgress"
+								></mat-progress-bar>
+								<span class="progress-text">{{ uploadProgress }}%</span>
+							</div>
+
+							<button
+								mat-raised-button
+								color="accent"
+								type="button"
+								(click)="uploadFile()"
+								*ngIf="!isUploading && !uploadedFileUrl"
+								class="upload-btn"
+							>
+								<mat-icon>cloud_upload</mat-icon>
+								Upload File
+							</button>
+						</div>
+
+						<div class="uploaded-file" *ngIf="uploadedFileUrl">
+							<mat-icon class="success-icon">check_circle</mat-icon>
+							<span class="uploaded-text">File uploaded successfully</span>
+							<a [href]="uploadedFileUrl" target="_blank" class="view-link">
+								<mat-icon>visibility</mat-icon>
+								View
+							</a>
+							<button
+								mat-icon-button
+								type="button"
+								(click)="removeFile()"
+								class="remove-btn"
+							>
+								<mat-icon>delete</mat-icon>
+							</button>
+						</div>
+					</div>
+
+					<div class="form-actions">
+						<button mat-stroked-button type="button" (click)="goBack()">
+							Cancel
+						</button>
+						<button
+							mat-raised-button
+							color="primary"
+							type="submit"
+							[disabled]="isSubmitting"
+						>
+							<mat-spinner diameter="20" *ngIf="isSubmitting"></mat-spinner>
+							<span *ngIf="!isSubmitting">Submit Complaint</span>
+						</button>
+					</div>
+				</form>
+			</mat-card-content>
+		</mat-card>
+	</ng-container>
+
+	<!-- Complaint Details View -->
+	<ng-container *ngIf="!isLoading && !isNewComplaint && complaint">
+		<div class="page-header detail-header">
+			<button mat-icon-button (click)="goBack()" class="back-btn">
+				<mat-icon>arrow_back</mat-icon>
+			</button>
+			<div class="header-text">
+				<div class="complaint-id-badge">#{{ complaint.id }}</div>
+				<h1>{{ complaint.title }}</h1>
+				<div class="header-meta">
+					<span class="category-badge" [ngClass]="complaint.category">
+						<mat-icon>{{ getCategoryIcon(complaint.category) }}</mat-icon>
+						{{ complaint.category | titlecase }}
+					</span>
+					<span
+						class="priority-badge"
+						[style.background]="getPriorityColor(complaint.priority) + '20'"
+						[style.color]="getPriorityColor(complaint.priority)"
+					>
+						<mat-icon>{{ getPriorityIcon(complaint.priority) }}</mat-icon>
+						{{ complaint.priority }}
+					</span>
+					<span class="date-badge">
+						<mat-icon>schedule</mat-icon>
+						{{ formatDate(complaint.created_at) }}
+					</span>
+				</div>
+			</div>
+		</div>
+
+		<!-- Deadline Banner -->
+		<div
+			class="deadline-banner"
+			[class.overdue]="isOverdue()"
+			[class.resolved]="complaint.status === 'Resolved'"
+			*ngIf="complaint.deadline_at"
+		>
+			<mat-icon>{{
+				isOverdue()
+					? "warning"
+					: complaint.status === "Resolved"
+					? "check_circle"
+					: "timer"
+			}}</mat-icon>
+			<span class="deadline-text">{{ getTimeRemaining() }}</span>
+			<span class="deadline-date"
+				>Deadline: {{ formatDate(complaint.deadline_at) }}</span
+			>
+		</div>
+
+		<!-- Status Tracker -->
+		<mat-card class="status-card fade-in">
+			<mat-card-header>
+				<mat-card-title>Status Progress</mat-card-title>
+			</mat-card-header>
+			<mat-card-content>
+				<div class="status-tracker">
+					<div
+						class="status-step"
+						*ngFor="let status of statusFlow; let i = index"
+						[class.completed]="isStatusCompleted(status)"
+						[class.active]="isStatusActive(status)"
+					>
+						<div class="step-indicator">
+							<mat-icon
+								*ngIf="isStatusCompleted(status) && !isStatusActive(status)"
+								>check</mat-icon
+							>
+							<span
+								*ngIf="!isStatusCompleted(status) || isStatusActive(status)"
+								>{{ i + 1 }}</span
+							>
+						</div>
+						<span class="step-label">{{ status }}</span>
+						<div class="step-line" *ngIf="i < statusFlow.length - 1"></div>
+					</div>
+				</div>
+			</mat-card-content>
+		</mat-card>
+
+		<!-- Complaint Details -->
+		<div class="details-grid">
+			<mat-card class="detail-card fade-in">
+				<mat-card-header>
+					<mat-icon mat-card-avatar>description</mat-icon>
+					<mat-card-title>Description</mat-card-title>
+				</mat-card-header>
+				<mat-card-content>
+					<p class="description-text">{{ complaint.description }}</p>
+
+					<div class="attachment-section" *ngIf="complaint.attachments">
+						<mat-divider></mat-divider>
+						<h4>Attachments</h4>
+						<div class="attachment-preview" *ngIf="!isPdfAttachment()">
+							<img
+								[src]="complaint.attachments"
+								alt="Attachment"
+								class="attachment-image"
+							/>
+						</div>
+						<div class="attachment-actions">
+							<a
+								*ngIf="isPdfAttachment()"
+								[href]="getAttachmentViewUrl()"
+								target="_blank"
+								class="attachment-link view-btn"
+							>
+								<mat-icon>visibility</mat-icon>
+								View PDF
+							</a>
+							<a
+								[href]="complaint.attachments"
+								target="_blank"
+								[download]="isPdfAttachment() ? 'attachment.pdf' : ''"
+								class="attachment-link"
+							>
+								<mat-icon>{{
+									isPdfAttachment() ? "download" : "open_in_new"
+								}}</mat-icon>
+								{{ isPdfAttachment() ? "Download" : "Open Original" }}
+							</a>
+						</div>
+					</div>
+				</mat-card-content>
+			</mat-card>
+
+			<mat-card class="detail-card fade-in">
+				<mat-card-header>
+					<mat-icon mat-card-avatar>info</mat-icon>
+					<mat-card-title>Information</mat-card-title>
+				</mat-card-header>
+				<mat-card-content>
+					<div class="info-row">
+						<span class="info-label">Status</span>
+						<span
+							class="status-badge"
+							[ngClass]="complaint.status.toLowerCase().replace(' ', '-')"
+						>
+							{{ complaint.status }}
+						</span>
+					</div>
+					<div class="info-row">
+						<span class="info-label">Priority</span>
+						<span
+							class="priority-text"
+							[style.color]="getPriorityColor(complaint.priority)"
+						>
+							<mat-icon>{{ getPriorityIcon(complaint.priority) }}</mat-icon>
+							{{ complaint.priority }}
+						</span>
+					</div>
+					<div class="info-row">
+						<span class="info-label">Category</span>
+						<span>{{ complaint.category | titlecase }}</span>
+					</div>
+					<div class="info-row" *ngIf="complaint.location">
+						<span class="info-label">Location</span>
+						<span class="location-text">
+							<mat-icon>location_on</mat-icon>
+							{{ complaint.location }}
+						</span>
+					</div>
+					<div class="info-row">
+						<span class="info-label">Submitted</span>
+						<span>{{ formatDate(complaint.created_at) }}</span>
+					</div>
+					<div class="info-row" *ngIf="complaint.deadline_at">
+						<span class="info-label">Deadline</span>
+						<span [class.overdue-text]="isOverdue()">
+							{{ formatDate(complaint.deadline_at) }}
+						</span>
+					</div>
+					<div class="info-row">
+						<span class="info-label">Last Updated</span>
+						<span>{{ formatDate(complaint.updated_at) }}</span>
+					</div>
+					<div class="info-row" *ngIf="complaint.staff_name">
+						<span class="info-label">Assigned To</span>
+						<span class="staff-name">
+							<mat-icon>engineering</mat-icon>
+							{{ complaint.staff_name }}
+						</span>
+					</div>
+				</mat-card-content>
+			</mat-card>
+
+			<!-- Resolution Notes -->
+			<mat-card class="detail-card fade-in" *ngIf="complaint.resolution_notes">
+				<mat-card-header>
+					<mat-icon mat-card-avatar>note</mat-icon>
+					<mat-card-title>Resolution Notes</mat-card-title>
+				</mat-card-header>
+				<mat-card-content>
+					<p class="resolution-text">{{ complaint.resolution_notes }}</p>
+				</mat-card-content>
+			</mat-card>
+
+			<!-- Feedback Section -->
+			<mat-card
+				class="detail-card fade-in"
+				*ngIf="complaint.status === 'Resolved'"
+			>
+				<mat-card-header>
+					<mat-icon mat-card-avatar>feedback</mat-icon>
+					<mat-card-title>Feedback</mat-card-title>
+				</mat-card-header>
+				<mat-card-content>
+					<div *ngIf="complaint.feedback; else noFeedback">
+						<div class="rating-display">
+							<mat-icon
+								*ngFor="let star of [1, 2, 3, 4, 5]"
+								[class.filled]="star <= (complaint.feedback_rating || 0)"
+							>
+								star
+							</mat-icon>
+							<span class="rating-text">{{ complaint.feedback_rating }}/5</span>
+						</div>
+						<p class="feedback-text">{{ complaint.feedback }}</p>
+					</div>
+					<ng-template #noFeedback>
+						<p class="no-feedback">No feedback provided yet.</p>
+						<button
+							mat-raised-button
+							color="primary"
+							(click)="openFeedbackDialog()"
+							*ngIf="authService.getCurrentUser()?.role === 'User'"
+						>
+							<mat-icon>rate_review</mat-icon>
+							Give Feedback
+						</button>
+					</ng-template>
+				</mat-card-content>
+			</mat-card>
+		</div>
+	</ng-container>
+
+	<!-- Feedback Dialog -->
+	<div
+		class="dialog-overlay"
+		*ngIf="showFeedbackDialog"
+		(click)="closeFeedbackDialog()"
+	>
+		<mat-card class="feedback-dialog" (click)="$event.stopPropagation()">
+			<mat-card-header>
+				<mat-card-title>Submit Feedback</mat-card-title>
+				<button
+					mat-icon-button
+					(click)="closeFeedbackDialog()"
+					class="close-btn"
+				>
+					<mat-icon>close</mat-icon>
+				</button>
+			</mat-card-header>
+			<mat-card-content>
+				<form [formGroup]="feedbackForm" (ngSubmit)="submitFeedback()">
+					<div class="rating-input">
+						<label>Rating</label>
+						<div class="star-rating">
+							<mat-icon
+								*ngFor="let star of [1, 2, 3, 4, 5]"
+								(click)="feedbackForm.patchValue({ feedback_rating: star })"
+								[class.filled]="
+									star <= feedbackForm.get('feedback_rating')?.value
+								"
+							>
+								star
+							</mat-icon>
+						</div>
+					</div>
+
+					<mat-form-field appearance="outline" class="full-width">
+						<mat-label>Your Feedback</mat-label>
+						<textarea
+							matInput
+							formControlName="feedback"
+							rows="4"
+							placeholder="Share your experience with the resolution"
+						></textarea>
+						<mat-error *ngIf="feedbackForm.get('feedback')?.invalid">
+							{{ getErrorMessage(feedbackForm, "feedback") }}
+						</mat-error>
+					</mat-form-field>
+
+					<div class="dialog-actions">
+						<button
+							mat-stroked-button
+							type="button"
+							(click)="closeFeedbackDialog()"
+						>
+							Cancel
+						</button>
+						<button
+							mat-raised-button
+							color="primary"
+							type="submit"
+							[disabled]="isSubmitting"
+						>
+							<mat-spinner diameter="20" *ngIf="isSubmitting"></mat-spinner>
+							<span *ngIf="!isSubmitting">Submit</span>
+						</button>
+					</div>
+				</form>
+			</mat-card-content>
+		</mat-card>
+	</div>
+</div>

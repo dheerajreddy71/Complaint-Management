@@ -1,0 +1,284 @@
+﻿.complaint-list-container {
+	min-height: calc(100vh - 52px);
+	background: #f5f5f5;
+	padding: 16px;
+	max-width: 1000px;
+	margin: 0 auto;
+}
+
+.page-header {
+	margin-bottom: 16px;
+
+	.header-content {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		width: 100%;
+	}
+
+	.header-text {
+		h1 {
+			font-size: 1.25rem;
+			font-weight: 500;
+			margin: 0;
+			color: #333;
+		}
+		p {
+			font-size: 0.8rem;
+			color: #666;
+			margin: 4px 0 0;
+		}
+	}
+
+	.new-btn {
+		font-size: 0.85rem;
+	}
+}
+
+.filters-section {
+	display: flex;
+	gap: 12px;
+	margin-bottom: 16px;
+	flex-wrap: wrap;
+	align-items: center;
+	background: white;
+	padding: 12px 16px;
+	border-radius: 8px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+
+	.search-field {
+		flex: 1;
+		min-width: 200px;
+	}
+
+	.filter-field {
+		min-width: 140px;
+	}
+
+	mat-form-field {
+		font-size: 0.85rem;
+	}
+
+	::ng-deep .mat-mdc-form-field-subscript-wrapper {
+		display: none;
+	}
+}
+
+.loading-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	min-height: 300px;
+	gap: 12px;
+
+	p {
+		color: #666;
+		font-size: 0.8rem;
+	}
+}
+
+.complaints-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+	gap: 16px;
+}
+
+.complaint-card {
+	cursor: pointer;
+	transition: all 0.2s ease;
+	border-radius: 8px;
+	padding: 16px;
+
+	&:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+	}
+
+	&.fade-in {
+		animation: fadeIn 0.3s ease;
+	}
+
+	mat-card-header {
+		padding: 12px 16px;
+		border-bottom: 1px solid #f0f0f0;
+
+		.card-header-content {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			width: 100%;
+		}
+
+		.complaint-id {
+			font-size: 0.75rem;
+			color: #666;
+			font-weight: 500;
+		}
+
+		.status-badge {
+			font-size: 0.65rem;
+			padding: 3px 8px;
+			border-radius: 4px;
+			font-weight: 500;
+			display: flex;
+			align-items: center;
+			gap: 4px;
+
+			mat-icon {
+				font-size: 12px;
+				width: 12px;
+				height: 12px;
+			}
+
+			&.open {
+				background: #fff3e0;
+				color: #f57c00;
+			}
+
+			&.assigned {
+				background: #e3f2fd;
+				color: #1976d2;
+			}
+
+			&.in-progress {
+				background: #e1f5fe;
+				color: #0288d1;
+			}
+
+			&.resolved {
+				background: #e8f5e9;
+				color: #2e7d32;
+			}
+
+			&.closed {
+				background: #f5f5f5;
+				color: #616161;
+			}
+
+			&.rejected {
+				background: #ffebee;
+				color: #c62828;
+			}
+		}
+	}
+
+	mat-card-content {
+		padding: 14px 16px;
+
+		.complaint-title {
+			font-size: 0.9rem;
+			font-weight: 500;
+			color: #333;
+			margin: 0 0 8px;
+		}
+
+		.complaint-description {
+			font-size: 0.8rem;
+			color: #666;
+			line-height: 1.4;
+			margin: 0 0 12px;
+		}
+
+		.complaint-meta {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 8px;
+
+			.category-badge {
+				font-size: 0.7rem;
+				color: #666;
+				display: flex;
+				align-items: center;
+				gap: 4px;
+
+				mat-icon {
+					font-size: 14px;
+					width: 14px;
+					height: 14px;
+				}
+			}
+
+			.date-info {
+				font-size: 0.65rem;
+				color: #999;
+				display: flex;
+				align-items: center;
+				gap: 4px;
+
+				mat-icon {
+					font-size: 12px;
+					width: 12px;
+					height: 12px;
+				}
+			}
+		}
+
+		.staff-info {
+			font-size: 0.7rem;
+			color: #666;
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			padding-top: 8px;
+			border-top: 1px solid #f0f0f0;
+
+			mat-icon {
+				font-size: 14px;
+				width: 14px;
+				height: 14px;
+				color: #1976d2;
+			}
+		}
+	}
+}
+
+.empty-state {
+	text-align: center;
+	padding: 48px 24px;
+	background: white;
+	border-radius: 8px;
+
+	mat-icon {
+		font-size: 48px;
+		width: 48px;
+		height: 48px;
+		color: #ccc;
+	}
+
+	h3 {
+		font-size: 1rem;
+		margin: 16px 0 8px;
+		color: #333;
+	}
+
+	p {
+		font-size: 0.85rem;
+		color: #666;
+		margin: 0 0 20px;
+	}
+
+	button {
+		font-size: 0.85rem;
+	}
+}
+
+.results-count {
+	text-align: center;
+	font-size: 0.8rem;
+	color: #666;
+	margin-top: 16px;
+	padding: 12px;
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
