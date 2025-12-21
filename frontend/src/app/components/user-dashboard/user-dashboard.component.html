@@ -1,0 +1,166 @@
+<div class="dashboard-container">
+	<!-- Welcome Section -->
+	<div class="welcome-section">
+		<div class="welcome-content">
+			<h1>Welcome back, {{ user?.name || "User" }}!</h1>
+			<p>Track and manage your complaints from your personal dashboard</p>
+		</div>
+		<button
+			mat-raised-button
+			color="primary"
+			(click)="newComplaint()"
+			class="new-complaint-btn"
+		>
+			<mat-icon>add</mat-icon>
+			New Complaint
+		</button>
+	</div>
+
+	<!-- Loading State -->
+	<div class="loading-container" *ngIf="isLoading">
+		<mat-spinner diameter="50"></mat-spinner>
+		<p>Loading your dashboard...</p>
+	</div>
+
+	<ng-container *ngIf="!isLoading">
+		<!-- Stats Cards -->
+		<div class="stats-grid">
+			<mat-card class="stat-card total">
+				<div class="stat-icon">
+					<mat-icon>confirmation_number</mat-icon>
+				</div>
+				<div class="stat-info">
+					<span class="stat-value">{{ stats.total }}</span>
+					<span class="stat-label">Total Complaints</span>
+				</div>
+			</mat-card>
+
+			<mat-card class="stat-card open">
+				<div class="stat-icon">
+					<mat-icon>pending</mat-icon>
+				</div>
+				<div class="stat-info">
+					<span class="stat-value">{{ stats.open }}</span>
+					<span class="stat-label">Open / Assigned</span>
+				</div>
+			</mat-card>
+
+			<mat-card class="stat-card progress">
+				<div class="stat-icon">
+					<mat-icon>autorenew</mat-icon>
+				</div>
+				<div class="stat-info">
+					<span class="stat-value">{{ stats.inProgress }}</span>
+					<span class="stat-label">In Progress</span>
+				</div>
+			</mat-card>
+
+			<mat-card class="stat-card resolved">
+				<div class="stat-icon">
+					<mat-icon>check_circle</mat-icon>
+				</div>
+				<div class="stat-info">
+					<span class="stat-value">{{ stats.resolved }}</span>
+					<span class="stat-label">Resolved</span>
+				</div>
+			</mat-card>
+
+			<mat-card class="stat-card overdue" *ngIf="stats.overdue > 0">
+				<div class="stat-icon">
+					<mat-icon>warning</mat-icon>
+				</div>
+				<div class="stat-info">
+					<span class="stat-value">{{ stats.overdue }}</span>
+					<span class="stat-label">Overdue</span>
+				</div>
+			</mat-card>
+		</div>
+
+		<!-- Recent Complaints -->
+		<mat-card class="recent-complaints-card">
+			<mat-card-header>
+				<mat-card-title>Recent Complaints</mat-card-title>
+				<button mat-button color="primary" (click)="viewAllComplaints()">
+					View All
+					<mat-icon>arrow_forward</mat-icon>
+				</button>
+			</mat-card-header>
+			<mat-card-content>
+				<div class="complaints-list" *ngIf="recentComplaints.length > 0">
+					<div
+						class="complaint-item"
+						*ngFor="let complaint of recentComplaints"
+						(click)="viewComplaint(complaint.id)"
+					>
+						<div class="complaint-main">
+							<div class="complaint-header">
+								<span class="complaint-id">#{{ complaint.id }}</span>
+								<span
+									class="status-badge"
+									[style.background]="getStatusColor(complaint.status) + '20'"
+									[style.color]="getStatusColor(complaint.status)"
+								>
+									{{ complaint.status }}
+								</span>
+							</div>
+							<h4 class="complaint-title">{{ complaint.title }}</h4>
+							<div class="complaint-meta">
+								<span class="category">
+									<mat-icon>category</mat-icon>
+									{{ complaint.category | titlecase }}
+								</span>
+								<span
+									class="priority"
+									[style.color]="getPriorityColor(complaint.priority)"
+								>
+									<mat-icon>{{ getPriorityIcon(complaint.priority) }}</mat-icon>
+									{{ complaint.priority }}
+								</span>
+								<span class="date">
+									<mat-icon>schedule</mat-icon>
+									{{ formatDate(complaint.created_at) }}
+								</span>
+							</div>
+						</div>
+						<div class="complaint-arrow">
+							<mat-icon>chevron_right</mat-icon>
+						</div>
+						<div class="overdue-indicator" *ngIf="isOverdue(complaint)">
+							<mat-icon>warning</mat-icon>
+							Overdue
+						</div>
+					</div>
+				</div>
+
+				<div class="empty-state" *ngIf="recentComplaints.length === 0">
+					<mat-icon>inbox</mat-icon>
+					<h3>No complaints yet</h3>
+					<p>You haven't submitted any complaints yet.</p>
+					<button mat-raised-button color="primary" (click)="newComplaint()">
+						<mat-icon>add</mat-icon>
+						Submit Your First Complaint
+					</button>
+				</div>
+			</mat-card-content>
+		</mat-card>
+
+		<!-- Quick Actions -->
+		<div class="quick-actions">
+			<h3>Quick Actions</h3>
+			<div class="actions-grid">
+				<button mat-stroked-button class="action-btn" (click)="newComplaint()">
+					<mat-icon>add_circle</mat-icon>
+					<span>New Complaint</span>
+				</button>
+				<button
+					mat-stroked-button
+					class="action-btn"
+					(click)="viewAllComplaints()"
+				>
+					<mat-icon>list</mat-icon>
+					<span>All Complaints</span>
+				</button>
+			</div>
+		</div>
+	</ng-container>
+</div>

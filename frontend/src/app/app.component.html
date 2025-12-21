@@ -1,0 +1,237 @@
+<div class="app-container">
+	<!-- Navigation Header -->
+	<header class="navbar" *ngIf="showNav && isAuthenticated">
+		<div class="navbar-content">
+			<div class="navbar-brand">
+				<mat-icon class="brand-icon">support_agent</mat-icon>
+				<span class="brand-text">Complaint Portal</span>
+			</div>
+
+			<!-- Desktop Navigation -->
+			<nav class="navbar-nav hide-mobile">
+				<!-- User Navigation -->
+				<ng-container *ngIf="currentUser?.role === 'User'">
+					<a mat-button routerLink="/dashboard" routerLinkActive="active">
+						<mat-icon>dashboard</mat-icon>
+						Dashboard
+					</a>
+					<a mat-button routerLink="/complaints" routerLinkActive="active">
+						<mat-icon>list_alt</mat-icon>
+						My Complaints
+					</a>
+					<a mat-button routerLink="/complaints/new" routerLinkActive="active">
+						<mat-icon>add_circle</mat-icon>
+						New Complaint
+					</a>
+				</ng-container>
+
+				<!-- Staff Navigation -->
+				<ng-container *ngIf="currentUser?.role === 'Staff'">
+					<a
+						mat-button
+						routerLink="/staff"
+						[queryParams]="{ view: 'overview' }"
+						routerLinkActive="active"
+					>
+						<mat-icon>insights</mat-icon>
+						Overview
+					</a>
+					<a
+						mat-button
+						routerLink="/staff"
+						[queryParams]="{ view: 'complaints' }"
+						routerLinkActive="active"
+					>
+						<mat-icon>assignment</mat-icon>
+						My Complaints
+					</a>
+				</ng-container>
+
+				<!-- Admin Navigation -->
+				<ng-container *ngIf="currentUser?.role === 'Admin'">
+					<a
+						mat-button
+						routerLink="/admin"
+						[queryParams]="{ view: 'overview' }"
+						routerLinkActive="active"
+					>
+						<mat-icon>insights</mat-icon>
+						Overview
+					</a>
+					<a
+						mat-button
+						routerLink="/admin"
+						[queryParams]="{ view: 'complaints' }"
+						routerLinkActive="active"
+					>
+						<mat-icon>folder_open</mat-icon>
+						All Complaints
+					</a>
+					<a
+						mat-button
+						routerLink="/admin"
+						[queryParams]="{ view: 'users' }"
+						routerLinkActive="active"
+					>
+						<mat-icon>people</mat-icon>
+						Users
+					</a>
+				</ng-container>
+			</nav>
+
+			<!-- User Menu -->
+			<div class="navbar-user hide-mobile">
+				<div class="user-info">
+					<span class="user-name">{{ currentUser?.name }}</span>
+					<span class="user-role">{{ getRoleLabel() }}</span>
+				</div>
+				<button
+					mat-icon-button
+					[matMenuTriggerFor]="userMenu"
+					class="user-avatar"
+				>
+					<mat-icon>account_circle</mat-icon>
+				</button>
+				<mat-menu #userMenu="matMenu">
+					<button mat-menu-item routerLink="/profile">
+						<mat-icon>person</mat-icon>
+						<span>Profile</span>
+					</button>
+					<mat-divider></mat-divider>
+					<button mat-menu-item (click)="logout()">
+						<mat-icon>logout</mat-icon>
+						<span>Logout</span>
+					</button>
+				</mat-menu>
+			</div>
+
+			<!-- Mobile Menu Toggle -->
+			<button
+				mat-icon-button
+				class="mobile-menu-toggle"
+				(click)="toggleMobileMenu()"
+			>
+				<mat-icon>{{ isMobileMenuOpen ? "close" : "menu" }}</mat-icon>
+			</button>
+		</div>
+
+		<!-- Mobile Navigation -->
+		<div class="mobile-nav" [class.open]="isMobileMenuOpen">
+			<div class="mobile-user-info">
+				<mat-icon class="mobile-avatar">account_circle</mat-icon>
+				<div>
+					<span class="mobile-user-name">{{ currentUser?.name }}</span>
+					<span class="mobile-user-role">{{ getRoleLabel() }}</span>
+				</div>
+			</div>
+
+			<mat-divider></mat-divider>
+
+			<!-- User Mobile Nav -->
+			<ng-container *ngIf="currentUser?.role === 'User'">
+				<a
+					mat-button
+					routerLink="/dashboard"
+					routerLinkActive="active"
+					(click)="isMobileMenuOpen = false"
+				>
+					<mat-icon>dashboard</mat-icon>
+					Dashboard
+				</a>
+				<a
+					mat-button
+					routerLink="/complaints"
+					routerLinkActive="active"
+					(click)="isMobileMenuOpen = false"
+				>
+					<mat-icon>list_alt</mat-icon>
+					My Complaints
+				</a>
+				<a
+					mat-button
+					routerLink="/complaints/new"
+					routerLinkActive="active"
+					(click)="isMobileMenuOpen = false"
+				>
+					<mat-icon>add_circle</mat-icon>
+					New Complaint
+				</a>
+			</ng-container>
+
+			<!-- Staff Mobile Nav -->
+			<ng-container *ngIf="currentUser?.role === 'Staff'">
+				<a
+					mat-button
+					routerLink="/staff"
+					[queryParams]="{ view: 'overview' }"
+					(click)="isMobileMenuOpen = false"
+				>
+					<mat-icon>insights</mat-icon>
+					Overview
+				</a>
+				<a
+					mat-button
+					routerLink="/staff"
+					[queryParams]="{ view: 'complaints' }"
+					(click)="isMobileMenuOpen = false"
+				>
+					<mat-icon>assignment</mat-icon>
+					My Complaints
+				</a>
+			</ng-container>
+
+			<!-- Admin Mobile Nav -->
+			<ng-container *ngIf="currentUser?.role === 'Admin'">
+				<a
+					mat-button
+					routerLink="/admin"
+					[queryParams]="{ view: 'overview' }"
+					(click)="isMobileMenuOpen = false"
+				>
+					<mat-icon>insights</mat-icon>
+					Overview
+				</a>
+				<a
+					mat-button
+					routerLink="/admin"
+					[queryParams]="{ view: 'complaints' }"
+					(click)="isMobileMenuOpen = false"
+				>
+					<mat-icon>folder_open</mat-icon>
+					All Complaints
+				</a>
+				<a
+					mat-button
+					routerLink="/admin"
+					[queryParams]="{ view: 'users' }"
+					(click)="isMobileMenuOpen = false"
+				>
+					<mat-icon>people</mat-icon>
+					Users
+				</a>
+			</ng-container>
+
+			<a
+				mat-button
+				routerLink="/profile"
+				routerLinkActive="active"
+				(click)="isMobileMenuOpen = false"
+			>
+				<mat-icon>person</mat-icon>
+				Profile
+			</a>
+
+			<mat-divider></mat-divider>
+
+			<button mat-button (click)="logout()" class="logout-btn">
+				<mat-icon>logout</mat-icon>
+				Logout
+			</button>
+		</div>
+	</header>
+
+	<!-- Main Content -->
+	<main class="main-content" [class.with-nav]="showNav && isAuthenticated">
+		<router-outlet></router-outlet>
+	</main>
+</div>
