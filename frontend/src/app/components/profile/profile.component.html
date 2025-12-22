@@ -1,0 +1,197 @@
+<div class="profile-container">
+	<!-- Profile Header -->
+	<div class="profile-header">
+		<div class="avatar-section">
+			<div class="avatar" [style.background]="getRoleColor()">
+				<mat-icon>{{ getRoleIcon() }}</mat-icon>
+			</div>
+			<div class="user-info">
+				<h1>{{ user?.name }}</h1>
+				<span class="role-badge" [style.background]="getRoleColor()">{{
+					user?.role
+				}}</span>
+			</div>
+		</div>
+		<p class="member-since">Member since {{ formatDate(user?.created_at) }}</p>
+	</div>
+
+	<div class="profile-content">
+		<!-- Profile Details Card -->
+		<mat-card class="profile-card">
+			<mat-card-header>
+				<mat-icon mat-card-avatar>person</mat-icon>
+				<mat-card-title>Profile Details</mat-card-title>
+				<mat-card-subtitle>Update your personal information</mat-card-subtitle>
+			</mat-card-header>
+			<mat-card-content>
+				<form [formGroup]="profileForm" (ngSubmit)="updateProfile()">
+					<mat-form-field appearance="outline" class="full-width">
+						<mat-label>Full Name</mat-label>
+						<input
+							matInput
+							formControlName="name"
+							placeholder="Enter your name"
+						/>
+						<mat-icon matPrefix>badge</mat-icon>
+						<mat-error *ngIf="profileForm.get('name')?.hasError('required')"
+							>Name is required</mat-error
+						>
+						<mat-error *ngIf="profileForm.get('name')?.hasError('minlength')"
+							>Name must be at least 2 characters</mat-error
+						>
+					</mat-form-field>
+
+					<mat-form-field appearance="outline" class="full-width">
+						<mat-label>Email Address</mat-label>
+						<input matInput formControlName="email" placeholder="Email" />
+						<mat-icon matPrefix>email</mat-icon>
+						<mat-hint>Email cannot be changed</mat-hint>
+					</mat-form-field>
+
+					<mat-form-field appearance="outline" class="full-width">
+						<mat-label>Contact Information</mat-label>
+						<textarea
+							matInput
+							formControlName="contact_info"
+							placeholder="Phone number, address, etc."
+							rows="3"
+						></textarea>
+						<mat-icon matPrefix>phone</mat-icon>
+					</mat-form-field>
+
+					<div class="form-actions">
+						<button
+							mat-raised-button
+							color="primary"
+							type="submit"
+							[disabled]="profileForm.invalid || isLoadingProfile"
+						>
+							<mat-spinner *ngIf="isLoadingProfile" diameter="20"></mat-spinner>
+							<span *ngIf="!isLoadingProfile">
+								<mat-icon>save</mat-icon>
+								Save Changes
+							</span>
+						</button>
+					</div>
+				</form>
+			</mat-card-content>
+		</mat-card>
+
+		<!-- Change Password Card -->
+		<mat-card class="password-card">
+			<mat-card-header>
+				<mat-icon mat-card-avatar>lock</mat-icon>
+				<mat-card-title>Change Password</mat-card-title>
+				<mat-card-subtitle>Keep your account secure</mat-card-subtitle>
+			</mat-card-header>
+			<mat-card-content>
+				<form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
+					<mat-form-field appearance="outline" class="full-width">
+						<mat-label>Current Password</mat-label>
+						<input
+							matInput
+							[type]="hideCurrentPassword ? 'password' : 'text'"
+							formControlName="currentPassword"
+							placeholder="Enter current password"
+						/>
+						<mat-icon matPrefix>key</mat-icon>
+						<button
+							mat-icon-button
+							matSuffix
+							type="button"
+							(click)="hideCurrentPassword = !hideCurrentPassword"
+						>
+							<mat-icon>{{
+								hideCurrentPassword ? "visibility_off" : "visibility"
+							}}</mat-icon>
+						</button>
+						<mat-error
+							*ngIf="passwordForm.get('currentPassword')?.hasError('required')"
+							>Current password is required</mat-error
+						>
+					</mat-form-field>
+
+					<mat-form-field appearance="outline" class="full-width">
+						<mat-label>New Password</mat-label>
+						<input
+							matInput
+							[type]="hideNewPassword ? 'password' : 'text'"
+							formControlName="newPassword"
+							placeholder="Enter new password"
+						/>
+						<mat-icon matPrefix>lock_reset</mat-icon>
+						<button
+							mat-icon-button
+							matSuffix
+							type="button"
+							(click)="hideNewPassword = !hideNewPassword"
+						>
+							<mat-icon>{{
+								hideNewPassword ? "visibility_off" : "visibility"
+							}}</mat-icon>
+						</button>
+						<mat-error
+							*ngIf="passwordForm.get('newPassword')?.hasError('required')"
+							>New password is required</mat-error
+						>
+						<mat-error
+							*ngIf="passwordForm.get('newPassword')?.hasError('minlength')"
+							>Password must be at least 6 characters</mat-error
+						>
+					</mat-form-field>
+
+					<mat-form-field appearance="outline" class="full-width">
+						<mat-label>Confirm New Password</mat-label>
+						<input
+							matInput
+							[type]="hideConfirmPassword ? 'password' : 'text'"
+							formControlName="confirmPassword"
+							placeholder="Confirm new password"
+						/>
+						<mat-icon matPrefix>lock_outline</mat-icon>
+						<button
+							mat-icon-button
+							matSuffix
+							type="button"
+							(click)="hideConfirmPassword = !hideConfirmPassword"
+						>
+							<mat-icon>{{
+								hideConfirmPassword ? "visibility_off" : "visibility"
+							}}</mat-icon>
+						</button>
+						<mat-error
+							*ngIf="passwordForm.get('confirmPassword')?.hasError('required')"
+							>Please confirm your password</mat-error
+						>
+						<mat-error
+							*ngIf="
+								passwordForm
+									.get('confirmPassword')
+									?.hasError('passwordMismatch')
+							"
+							>Passwords do not match</mat-error
+						>
+					</mat-form-field>
+
+					<div class="form-actions">
+						<button
+							mat-raised-button
+							color="warn"
+							type="submit"
+							[disabled]="passwordForm.invalid || isLoadingPassword"
+						>
+							<mat-spinner
+								*ngIf="isLoadingPassword"
+								diameter="20"
+							></mat-spinner>
+							<span *ngIf="!isLoadingPassword">
+								<mat-icon>lock</mat-icon>
+								Change Password
+							</span>
+						</button>
+					</div>
+				</form>
+			</mat-card-content>
+		</mat-card>
+	</div>
+</div>
