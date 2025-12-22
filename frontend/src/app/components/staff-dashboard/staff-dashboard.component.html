@@ -1,0 +1,294 @@
+﻿<div class="staff-dashboard">
+	<div class="dashboard-content">
+		<!-- Loading State -->
+		<div class="loading-container" *ngIf="isLoading">
+			<mat-spinner diameter="40"></mat-spinner>
+			<p>Loading dashboard...</p>
+		</div>
+
+		<!-- Overview View -->
+		<div class="view-content" *ngIf="!isLoading && currentView === 'overview'">
+			<div class="page-header">
+				<h1>Staff Dashboard</h1>
+				<p class="subtitle">Welcome back, {{ user?.name }}</p>
+			</div>
+
+			<!-- Stats Cards -->
+			<div class="stats-grid">
+				<mat-card class="stat-card total" (click)="goToComplaints('all')">
+					<mat-card-content>
+						<div class="stat-icon">
+							<mat-icon>assignment</mat-icon>
+						</div>
+						<div class="stat-info">
+							<span class="stat-value">{{ stats.total }}</span>
+							<span class="stat-label">Total Assigned</span>
+						</div>
+					</mat-card-content>
+				</mat-card>
+
+				<mat-card
+					class="stat-card assigned"
+					(click)="goToComplaints('Assigned')"
+				>
+					<mat-card-content>
+						<div class="stat-icon">
+							<mat-icon>assignment_ind</mat-icon>
+						</div>
+						<div class="stat-info">
+							<span class="stat-value">{{ stats.assigned }}</span>
+							<span class="stat-label">New Assigned</span>
+						</div>
+					</mat-card-content>
+				</mat-card>
+
+				<mat-card
+					class="stat-card in-progress"
+					(click)="goToComplaints('In-progress')"
+				>
+					<mat-card-content>
+						<div class="stat-icon">
+							<mat-icon>pending</mat-icon>
+						</div>
+						<div class="stat-info">
+							<span class="stat-value">{{ stats.inProgress }}</span>
+							<span class="stat-label">In Progress</span>
+						</div>
+					</mat-card-content>
+				</mat-card>
+
+				<mat-card
+					class="stat-card resolved"
+					(click)="goToComplaints('Resolved')"
+				>
+					<mat-card-content>
+						<div class="stat-icon">
+							<mat-icon>check_circle</mat-icon>
+						</div>
+						<div class="stat-info">
+							<span class="stat-value">{{ stats.resolved }}</span>
+							<span class="stat-label">Resolved</span>
+						</div>
+					</mat-card-content>
+				</mat-card>
+
+				<mat-card
+					class="stat-card overdue"
+					*ngIf="stats.overdue > 0"
+					(click)="goToComplaints('overdue')"
+				>
+					<mat-card-content>
+						<div class="stat-icon">
+							<mat-icon>warning</mat-icon>
+						</div>
+						<div class="stat-info">
+							<span class="stat-value">{{ stats.overdue }}</span>
+							<span class="stat-label">Overdue</span>
+						</div>
+					</mat-card-content>
+				</mat-card>
+			</div>
+
+			<!-- Performance Stats -->
+			<div class="performance-row">
+				<mat-card class="performance-card rating-card">
+					<mat-card-content>
+						<div class="perf-icon">
+							<mat-icon>star</mat-icon>
+						</div>
+						<div class="perf-info">
+							<span class="perf-value"
+								>{{ avgRating | number : "1.1-1" }}/5</span
+							>
+							<span class="perf-label">Your Rating</span>
+						</div>
+						<div class="rating-stars">
+							<mat-icon
+								*ngFor="let star of [1, 2, 3, 4, 5]"
+								[class.filled]="star <= avgRating"
+							>
+								{{ star <= avgRating ? "star" : "star_border" }}
+							</mat-icon>
+						</div>
+					</mat-card-content>
+				</mat-card>
+				<mat-card class="performance-card">
+					<mat-card-content>
+						<div class="perf-icon resolution">
+							<mat-icon>check_circle</mat-icon>
+						</div>
+						<div class="perf-info">
+							<span class="perf-value">{{ getResolutionRate() }}%</span>
+							<span class="perf-label">Resolution Rate</span>
+						</div>
+					</mat-card-content>
+				</mat-card>
+			</div>
+
+			<!-- Recent Complaints -->
+			<mat-card class="recent-card">
+				<mat-card-header>
+					<mat-card-title>
+						<mat-icon>history</mat-icon>
+						Recent Complaints
+					</mat-card-title>
+					<button
+						mat-button
+						color="primary"
+						routerLink="/staff"
+						[queryParams]="{ view: 'complaints' }"
+					>
+						View All <mat-icon>arrow_forward</mat-icon>
+					</button>
+				</mat-card-header>
+				<mat-card-content>
+					<div class="recent-list" *ngIf="complaints.length > 0">
+						<div
+							class="recent-item"
+							*ngFor="let complaint of complaints.slice(0, 5)"
+							(click)="viewComplaintDetails(complaint)"
+							[class.overdue]="isOverdue(complaint)"
+						>
+							<div class="item-main">
+								<span class="item-title"
+									>#{{ complaint.id }} - {{ complaint.title }}</span
+								>
+								<span class="item-user">{{ complaint.user_name }}</span>
+							</div>
+							<div class="item-meta">
+								<span
+									class="priority-badge"
+									[style.background]="getPriorityColor(complaint.priority)"
+								>
+									{{ complaint.priority }}
+								</span>
+								<span
+									class="status-badge"
+									[style.background]="getStatusColor(complaint.status)"
+								>
+									{{ complaint.status }}
+								</span>
+							</div>
+						</div>
+					</div>
+					<div class="empty-recent" *ngIf="complaints.length === 0">
+						<mat-icon>inbox</mat-icon>
+						<p>No complaints assigned yet</p>
+					</div>
+				</mat-card-content>
+			</mat-card>
+		</div>
+
+		<!-- Complaints View -->
+		<div
+			class="view-content"
+			*ngIf="!isLoading && currentView === 'complaints'"
+		>
+			<div class="page-header">
+				<h1>My Complaints</h1>
+				<p class="subtitle">
+					{{ filteredComplaints.length }} complaint(s) assigned to you
+				</p>
+			</div>
+
+			<!-- Filter Section -->
+			<div class="filter-section">
+				<mat-form-field appearance="outline">
+					<mat-label>Filter by Status</mat-label>
+					<mat-select
+						[(ngModel)]="statusFilter"
+						(ngModelChange)="onFilterChange()"
+					>
+						<mat-option value="all">All Complaints</mat-option>
+						<mat-option value="Assigned">Assigned</mat-option>
+						<mat-option value="In-progress">In Progress</mat-option>
+						<mat-option value="Resolved">Resolved</mat-option>
+						<mat-option value="overdue" *ngIf="stats.overdue > 0"
+							>Overdue ({{ stats.overdue }})</mat-option
+						>
+					</mat-select>
+				</mat-form-field>
+
+				<button mat-icon-button (click)="loadComplaints()" matTooltip="Refresh">
+					<mat-icon>refresh</mat-icon>
+				</button>
+			</div>
+
+			<!-- Complaints List -->
+			<div class="complaints-list">
+				<div class="empty-state" *ngIf="filteredComplaints.length === 0">
+					<mat-icon>inbox</mat-icon>
+					<h3>No complaints found</h3>
+					<p>No complaints match your current filter</p>
+				</div>
+
+				<mat-card
+					class="complaint-item"
+					*ngFor="let complaint of pagedComplaints"
+					(click)="viewComplaintDetails(complaint)"
+					[class.overdue]="isOverdue(complaint)"
+				>
+					<mat-card-content>
+						<div class="item-header">
+							<span class="complaint-id">#{{ complaint.id }}</span>
+							<span
+								class="status-badge"
+								[style.background]="getStatusColor(complaint.status) + '20'"
+								[style.color]="getStatusColor(complaint.status)"
+							>
+								{{ complaint.status }}
+							</span>
+							<span
+								class="priority-badge"
+								[style.background]="getPriorityColor(complaint.priority) + '20'"
+								[style.color]="getPriorityColor(complaint.priority)"
+							>
+								{{ complaint.priority }}
+							</span>
+						</div>
+						<h4 class="complaint-title">{{ complaint.title }}</h4>
+						<div class="complaint-meta">
+							<span class="category">
+								<mat-icon>{{ getCategoryIcon(complaint.category) }}</mat-icon>
+								{{ complaint.category | titlecase }}
+							</span>
+							<span class="location" *ngIf="complaint.location">
+								<mat-icon>location_on</mat-icon>
+								{{ complaint.location }}
+							</span>
+							<span class="date">
+								<mat-icon>schedule</mat-icon>
+								{{ formatDate(complaint.created_at) }}
+							</span>
+						</div>
+						<div class="user-info">
+							<mat-icon>person</mat-icon>
+							{{ complaint.user_name }}
+						</div>
+						<div
+							class="deadline-info"
+							*ngIf="complaint.deadline_at"
+							[class.overdue]="isOverdue(complaint)"
+						>
+							<mat-icon>{{
+								isOverdue(complaint) ? "warning" : "timer"
+							}}</mat-icon>
+							{{ getTimeRemaining(complaint.deadline_at) }}
+						</div>
+					</mat-card-content>
+				</mat-card>
+			</div>
+
+			<mat-paginator
+				#complaintsPaginator
+				[length]="filteredComplaints.length"
+				[pageSize]="pageSize"
+				[pageSizeOptions]="pageSizeOptions"
+				[pageIndex]="pageIndex"
+				(page)="onPageChange($event)"
+				showFirstLastButtons
+				*ngIf="filteredComplaints.length > 0"
+			></mat-paginator>
+		</div>
+	</div>
+</div>
