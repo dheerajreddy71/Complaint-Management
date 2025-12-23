@@ -1,0 +1,273 @@
+<div class="admin-detail-page">
+	<!-- Page Header -->
+	<div class="page-header">
+		<button mat-icon-button class="back-btn" (click)="goBack()">
+			<mat-icon>arrow_back</mat-icon>
+		</button>
+		<div class="header-content">
+			<h1>Complaint Management</h1>
+			<p *ngIf="complaint">ID: #{{ complaint.id }}</p>
+		</div>
+	</div>
+
+	<!-- Loading State -->
+	<div *ngIf="isLoading" class="loading-container">
+		<mat-spinner diameter="50"></mat-spinner>
+		<p>Loading complaint details...</p>
+	</div>
+
+	<!-- Overdue Banner -->
+	<div *ngIf="!isLoading && complaint && isOverdue()" class="overdue-banner">
+		<mat-icon>warning</mat-icon>
+		<span>This complaint is overdue! {{ getTimeRemaining() }}</span>
+	</div>
+
+	<!-- Main Content -->
+	<div *ngIf="!isLoading && complaint" class="content-wrapper">
+		<div class="content-grid">
+			<!-- Left Column - Main Info -->
+			<div class="main-column">
+				<!-- Complaint Card -->
+				<mat-card class="complaint-card">
+					<div class="card-header">
+						<mat-icon [style.color]="getPriorityColor(complaint.priority)">{{
+							getCategoryIcon(complaint.category)
+						}}</mat-icon>
+						<div class="header-info">
+							<h2>{{ complaint.title }}</h2>
+							<div class="badges">
+								<span class="badge category">{{
+									complaint.category | titlecase
+								}}</span>
+								<span
+									class="badge priority"
+									[style.backgroundColor]="getPriorityColor(complaint.priority)"
+								>
+									{{ complaint.priority || "Medium" }}
+								</span>
+								<span
+									class="badge status"
+									[style.backgroundColor]="getStatusColor(complaint.status)"
+								>
+									{{ complaint.status }}
+								</span>
+							</div>
+						</div>
+					</div>
+
+					<div class="card-body">
+						<h3>Description</h3>
+						<p class="description">{{ complaint.description }}</p>
+
+						<!-- Attachment -->
+						<div *ngIf="complaint.attachments" class="attachment-section">
+							<h3>Attachment</h3>
+							<div class="attachment-preview">
+								<ng-container *ngIf="isPdf(); else imagePreview">
+									<iframe
+										[src]="getAttachmentUrl() | safe"
+										class="pdf-preview"
+									></iframe>
+									<a
+										[href]="getAttachmentUrl()"
+										target="_blank"
+										mat-stroked-button
+										color="primary"
+									>
+										<mat-icon>open_in_new</mat-icon>
+										Open PDF
+									</a>
+								</ng-container>
+								<ng-template #imagePreview>
+									<img
+										[src]="getAttachmentUrl()"
+										alt="Attachment"
+										class="image-preview"
+									/>
+									<a
+										[href]="getAttachmentUrl()"
+										target="_blank"
+										mat-stroked-button
+										color="primary"
+									>
+										<mat-icon>open_in_new</mat-icon>
+										View Full Size
+									</a>
+								</ng-template>
+							</div>
+						</div>
+					</div>
+				</mat-card>
+
+				<!-- User Info Card -->
+				<mat-card class="info-card user-card">
+					<h3><mat-icon>person</mat-icon> Submitted By</h3>
+					<div class="user-info">
+						<div class="avatar">
+							<mat-icon>account_circle</mat-icon>
+						</div>
+						<div class="user-details">
+							<span class="name">{{ complaint.user_name }}</span>
+							<span class="email">{{ complaint.user_email }}</span>
+						</div>
+					</div>
+				</mat-card>
+
+				<!-- Resolution Notes Card -->
+				<mat-card
+					*ngIf="complaint.resolution_notes && complaint.status === 'Resolved'"
+					class="info-card notes-card"
+				>
+					<h3><mat-icon>note</mat-icon> Resolution Notes</h3>
+					<p>{{ complaint.resolution_notes }}</p>
+				</mat-card>
+
+				<!-- Feedback Card -->
+				<mat-card *ngIf="complaint.feedback" class="info-card feedback-card">
+					<h3><mat-icon>feedback</mat-icon> User Feedback</h3>
+					<div class="rating" *ngIf="complaint.feedback_rating">
+						<mat-icon
+							*ngFor="let star of [1, 2, 3, 4, 5]"
+							[class.filled]="star <= (complaint.feedback_rating || 0)"
+						>
+							{{
+								star <= (complaint.feedback_rating || 0)
+									? "star"
+									: "star_border"
+							}}
+						</mat-icon>
+					</div>
+					<p>{{ complaint.feedback }}</p>
+				</mat-card>
+			</div>
+
+			<!-- Right Column - Details & Actions -->
+			<div class="side-column">
+				<!-- Details Card -->
+				<mat-card class="details-card">
+					<h3>Details</h3>
+					<div class="detail-list">
+						<div class="detail-item">
+							<span class="label">Complaint ID</span>
+							<span class="value">#{{ complaint.id }}</span>
+						</div>
+						<div class="detail-item">
+							<span class="label">Category</span>
+							<span class="value">{{ complaint.category }}</span>
+						</div>
+						<div class="detail-item">
+							<span class="label">Priority</span>
+							<span
+								class="value priority-badge"
+								[style.color]="getPriorityColor(complaint.priority)"
+							>
+								<mat-icon>flag</mat-icon>
+								{{ complaint.priority }}
+							</span>
+						</div>
+						<div class="detail-item" *ngIf="complaint.location">
+							<span class="label">Location</span>
+							<span class="value">
+								<mat-icon>location_on</mat-icon>
+								{{ complaint.location }}
+							</span>
+						</div>
+						<div class="detail-item">
+							<span class="label">Created</span>
+							<span class="value">{{ formatDate(complaint.created_at) }}</span>
+						</div>
+						<div class="detail-item" *ngIf="complaint.deadline_at">
+							<span class="label">Deadline</span>
+							<span class="value" [class.overdue]="isOverdue()">
+								{{ formatDate(complaint.deadline_at) }}
+								<span
+									class="time-badge"
+									*ngIf="complaint.status !== 'Resolved'"
+									>{{ getTimeRemaining() }}</span
+								>
+							</span>
+						</div>
+						<div class="detail-item">
+							<span class="label">Assigned Staff</span>
+							<span class="value">{{
+								complaint.staff_name || "Not Assigned"
+							}}</span>
+						</div>
+					</div>
+				</mat-card>
+
+				<!-- Admin Actions Card - Only show for non-resolved complaints -->
+				<mat-card class="action-card" *ngIf="complaint.status !== 'Resolved'">
+					<h3>Manage Complaint</h3>
+
+					<!-- Assign Staff -->
+					<div class="form-group">
+						<label>Assign to Staff</label>
+						<mat-form-field appearance="outline">
+							<mat-label>Select Staff Member</mat-label>
+							<mat-select [(ngModel)]="selectedStaffId">
+								<mat-option [value]="null">-- Unassigned --</mat-option>
+								<mat-option
+									*ngFor="let staff of getFilteredStaff()"
+									[value]="staff.id"
+								>
+									{{ staff.name }}
+									<span *ngIf="staff.department">
+										({{ staff.department }})
+									</span>
+								</mat-option>
+							</mat-select>
+							<mat-hint *ngIf="complaint.category !== 'other'">
+								Showing {{ complaint.category | titlecase }} department staff
+							</mat-hint>
+							<mat-hint *ngIf="complaint.category === 'other'">
+								Showing all staff members
+							</mat-hint>
+						</mat-form-field>
+					</div>
+
+					<!-- Update Status -->
+					<div class="form-group">
+						<label>Update Status</label>
+						<mat-form-field appearance="outline">
+							<mat-label>Status</mat-label>
+							<mat-select [(ngModel)]="selectedStatus">
+								<mat-option
+									*ngFor="let status of statusOptions"
+									[value]="status"
+								>
+									{{ status }}
+								</mat-option>
+							</mat-select>
+						</mat-form-field>
+					</div>
+
+					<!-- Resolution Notes -->
+					<div class="form-group">
+						<label>Resolution Notes</label>
+						<mat-form-field appearance="outline">
+							<mat-label>Notes</mat-label>
+							<textarea
+								matInput
+								[(ngModel)]="resolutionNotes"
+								rows="4"
+								placeholder="Add notes about the resolution..."
+							></textarea>
+						</mat-form-field>
+					</div>
+
+					<button
+						mat-raised-button
+						color="primary"
+						(click)="updateComplaint()"
+						[disabled]="isUpdating"
+						class="update-btn"
+					>
+						<mat-spinner *ngIf="isUpdating" diameter="20"></mat-spinner>
+						<span *ngIf="!isUpdating">Update Complaint</span>
+					</button>
+				</mat-card>
+			</div>
+		</div>
+	</div>
+</div>
