@@ -1,0 +1,152 @@
+﻿<div class="admin-users-page">
+	<div class="page-header">
+		<h1>Users</h1>
+	</div>
+
+	<div *ngIf="isLoading" class="loading-container">
+		<mat-spinner diameter="40"></mat-spinner>
+		<p>Loading users...</p>
+	</div>
+
+	<div *ngIf="!isLoading" class="content-container">
+		<div class="filters-section">
+			<mat-form-field appearance="outline">
+				<mat-label>Search</mat-label>
+				<input
+					matInput
+					[(ngModel)]="searchQuery"
+					(ngModelChange)="onSearchChange()"
+					placeholder="Search by name or email"
+				/>
+				<mat-icon matPrefix>search</mat-icon>
+			</mat-form-field>
+			<mat-form-field appearance="outline">
+				<mat-label>Role</mat-label>
+				<mat-select [(ngModel)]="roleFilter" (ngModelChange)="onSearchChange()">
+					<mat-option value="all">All Roles</mat-option>
+					<mat-option value="Admin">Admin</mat-option>
+					<mat-option value="Staff">Staff</mat-option>
+					<mat-option value="User">User</mat-option>
+				</mat-select>
+			</mat-form-field>
+		</div>
+
+		<div class="users-grid" *ngIf="filteredUsers.length > 0">
+			<mat-card class="user-card" *ngFor="let user of pagedUsers">
+				<mat-card-content>
+					<div class="user-header">
+						<div class="user-avatar">{{ user.name.charAt(0) || "U" }}</div>
+						<div class="user-info">
+							<span class="user-name">{{ user.name }}</span>
+							<span class="user-email">{{ user.email }}</span>
+						</div>
+						<span class="role-badge" [ngClass]="user.role.toLowerCase()">{{
+							user.role
+						}}</span>
+					</div>
+					<div class="user-details">
+						<div class="detail-item" *ngIf="user.contact_info">
+							<mat-icon>phone</mat-icon>
+							<span>{{ user.contact_info }}</span>
+						</div>
+						<div class="detail-item" *ngIf="user.department">
+							<mat-icon>business</mat-icon>
+							<span>{{ user.department }}</span>
+						</div>
+						<div class="detail-item">
+							<mat-icon>calendar_today</mat-icon>
+							<span>Joined {{ formatDate(user.created_at) }}</span>
+						</div>
+					</div>
+					<div class="user-actions">
+						<button mat-stroked-button color="primary" (click)="editUser(user)">
+							<mat-icon>edit</mat-icon> Edit
+						</button>
+						<button
+							mat-stroked-button
+							color="warn"
+							(click)="deleteUser(user)"
+							*ngIf="user.role !== 'Admin'"
+						>
+							<mat-icon>delete</mat-icon> Delete
+						</button>
+					</div>
+				</mat-card-content>
+			</mat-card>
+		</div>
+
+		<div class="empty-state" *ngIf="filteredUsers.length === 0">
+			<mat-icon>people_outline</mat-icon>
+			<h3>No users found</h3>
+			<p>Try adjusting your search or filters</p>
+		</div>
+
+		<!-- Pagination -->
+		<mat-paginator
+			*ngIf="filteredUsers.length > 0"
+			[length]="filteredUsers.length"
+			[pageSize]="pageSize"
+			[pageIndex]="pageIndex"
+			[pageSizeOptions]="pageSizeOptions"
+			(page)="onPageChange($event)"
+			showFirstLastButtons
+			aria-label="Select page of users"
+		>
+		</mat-paginator>
+	</div>
+
+	<!-- Edit User Modal -->
+	<div class="edit-modal-overlay" *ngIf="editingUser" (click)="cancelEdit()">
+		<mat-card class="edit-modal" (click)="$event.stopPropagation()">
+			<mat-card-header>
+				<mat-card-title>Edit User</mat-card-title>
+			</mat-card-header>
+			<mat-card-content>
+				<div class="user-preview">
+					<div class="user-avatar large">
+						{{ editingUser.name.charAt(0) || "U" }}
+					</div>
+					<div class="user-info">
+						<span class="user-name">{{ editingUser.name }}</span>
+						<span class="user-email">{{ editingUser.email }}</span>
+					</div>
+				</div>
+
+				<mat-form-field appearance="outline" class="full-width">
+					<mat-label>Role</mat-label>
+					<mat-select [(ngModel)]="editRole">
+						<mat-option *ngFor="let role of roles" [value]="role">
+							{{ role }}
+						</mat-option>
+					</mat-select>
+				</mat-form-field>
+
+				<mat-form-field
+					appearance="outline"
+					class="full-width"
+					*ngIf="editRole === 'Staff'"
+				>
+					<mat-label>Department</mat-label>
+					<mat-select [(ngModel)]="editDepartment" required>
+						<mat-option *ngFor="let dept of departments" [value]="dept">
+							{{ dept }}
+						</mat-option>
+					</mat-select>
+					<mat-hint>Staff members must be assigned to a department</mat-hint>
+				</mat-form-field>
+			</mat-card-content>
+			<mat-card-actions align="end">
+				<button mat-button (click)="cancelEdit()">Cancel</button>
+				<button
+					mat-raised-button
+					color="primary"
+					(click)="saveUser()"
+					[disabled]="isUpdating"
+				>
+					<mat-spinner diameter="18" *ngIf="isUpdating"></mat-spinner>
+					<span *ngIf="!isUpdating">Save Changes</span>
+				</button>
+			</mat-card-actions>
+		</mat-card>
+	</div>
+</div>
