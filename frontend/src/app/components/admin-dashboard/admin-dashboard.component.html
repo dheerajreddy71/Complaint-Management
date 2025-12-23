@@ -1,0 +1,557 @@
+﻿<div class="admin-dashboard">
+	<div class="loading-container" *ngIf="isLoading">
+		<mat-spinner diameter="36"></mat-spinner>
+		<p>Loading...</p>
+	</div>
+
+	<ng-container *ngIf="!isLoading">
+		<!-- Overview View -->
+		<div class="view-content" *ngIf="currentView === 'overview'">
+			<div class="stats-grid">
+				<mat-card
+					class="stat-card total clickable"
+					(click)="goToComplaints('all')"
+				>
+					<mat-card-content>
+						<div class="stat-icon"><mat-icon>summarize</mat-icon></div>
+						<div class="stat-info">
+							<span class="stat-value">{{ stats.total }}</span>
+							<span class="stat-label">Total Complaints</span>
+						</div>
+					</mat-card-content>
+				</mat-card>
+
+				<mat-card
+					class="stat-card open clickable"
+					(click)="goToComplaints('Open')"
+				>
+					<mat-card-content>
+						<div class="stat-icon"><mat-icon>schedule</mat-icon></div>
+						<div class="stat-info">
+							<span class="stat-value">{{ stats.open }}</span>
+							<span class="stat-label">Open</span>
+						</div>
+					</mat-card-content>
+				</mat-card>
+
+				<mat-card
+					class="stat-card assigned clickable"
+					(click)="goToComplaints('Assigned')"
+				>
+					<mat-card-content>
+						<div class="stat-icon"><mat-icon>assignment_ind</mat-icon></div>
+						<div class="stat-info">
+							<span class="stat-value">{{ stats.assigned }}</span>
+							<span class="stat-label">Assigned</span>
+						</div>
+					</mat-card-content>
+				</mat-card>
+
+				<mat-card
+					class="stat-card in-progress clickable"
+					(click)="goToComplaints('In-progress')"
+				>
+					<mat-card-content>
+						<div class="stat-icon"><mat-icon>pending</mat-icon></div>
+						<div class="stat-info">
+							<span class="stat-value">{{ stats.inProgress }}</span>
+							<span class="stat-label">In Progress</span>
+						</div>
+					</mat-card-content>
+				</mat-card>
+
+				<mat-card
+					class="stat-card resolved clickable"
+					(click)="goToComplaints('Resolved')"
+				>
+					<mat-card-content>
+						<div class="stat-icon"><mat-icon>check_circle</mat-icon></div>
+						<div class="stat-info">
+							<span class="stat-value">{{ stats.resolved }}</span>
+							<span class="stat-label">Resolved</span>
+						</div>
+					</mat-card-content>
+				</mat-card>
+
+				<mat-card
+					class="stat-card overdue clickable"
+					(click)="goToComplaints('overdue')"
+				>
+					<mat-card-content>
+						<div class="stat-icon"><mat-icon>warning</mat-icon></div>
+						<div class="stat-info">
+							<span class="stat-value">{{ overdueCount }}</span>
+							<span class="stat-label">Overdue</span>
+						</div>
+					</mat-card-content>
+				</mat-card>
+			</div>
+
+			<div class="metrics-row">
+				<mat-card class="metric-card">
+					<mat-card-content>
+						<mat-icon>trending_up</mat-icon>
+						<div class="metric-info">
+							<span class="metric-value">{{ getResolutionRate() }}%</span>
+							<span class="metric-label">Resolution Rate</span>
+						</div>
+					</mat-card-content>
+				</mat-card>
+				<mat-card class="metric-card">
+					<mat-card-content>
+						<mat-icon>timer</mat-icon>
+						<div class="metric-info">
+							<span class="metric-value">{{
+								formatResolutionTime(avgResolutionHours)
+							}}</span>
+							<span class="metric-label">Avg. Resolution</span>
+						</div>
+					</mat-card-content>
+				</mat-card>
+				<mat-card class="metric-card">
+					<mat-card-content>
+						<mat-icon>star</mat-icon>
+						<div class="metric-info">
+							<span class="metric-value"
+								>{{ avgRating | number : "1.1-1" }}/5</span
+							>
+							<span class="metric-label">Avg. Rating</span>
+						</div>
+					</mat-card-content>
+				</mat-card>
+				<mat-card class="metric-card">
+					<mat-card-content>
+						<mat-icon>people</mat-icon>
+						<div class="metric-info">
+							<span class="metric-value">{{ staffMembers.length }}</span>
+							<span class="metric-label">Active Staff</span>
+						</div>
+					</mat-card-content>
+				</mat-card>
+			</div>
+
+			<div class="dashboard-grid">
+				<mat-card class="category-card" *ngIf="stats.byCategory.length > 0">
+					<mat-card-header
+						><mat-card-title
+							>Complaints by Category</mat-card-title
+						></mat-card-header
+					>
+					<mat-card-content>
+						<div class="category-bars">
+							<div class="category-bar" *ngFor="let cat of stats.byCategory">
+								<div class="bar-label">
+									<mat-icon>{{ getCategoryIcon(cat.category) }}</mat-icon>
+									<span>{{ cat.category | titlecase }}</span>
+								</div>
+								<div class="bar-container">
+									<div
+										class="bar-fill"
+										[style.width.%]="(cat.count / stats.total) * 100"
+									></div>
+								</div>
+								<span class="bar-value">{{ cat.count }}</span>
+							</div>
+						</div>
+					</mat-card-content>
+				</mat-card>
+
+				<mat-card class="recent-card">
+					<mat-card-header>
+						<mat-card-title
+							><mat-icon>assignment_late</mat-icon>Recent
+							Unassigned</mat-card-title
+						>
+						<button mat-button color="primary" (click)="goToComplaints('Open')">
+							View All
+						</button>
+					</mat-card-header>
+					<mat-card-content>
+						<div class="recent-list">
+							<ng-container
+								*ngFor="let complaint of complaints | slice : 0 : 5"
+							>
+								<div
+									*ngIf="complaint.status === 'Open'"
+									class="recent-item"
+									[class.overdue]="isOverdue(complaint)"
+									(click)="viewComplaintDetails(complaint)"
+								>
+									<div class="item-main">
+										<span class="item-title">{{ complaint.title }}</span>
+										<span class="item-user">by {{ complaint.user_name }}</span>
+									</div>
+									<div class="item-meta">
+										<span
+											class="priority-badge"
+											[style.background]="getPriorityColor(complaint.priority)"
+											>{{ complaint.priority }}</span
+										>
+									</div>
+								</div>
+							</ng-container>
+							<div class="empty-recent" *ngIf="stats.open === 0">
+								<mat-icon>check_circle</mat-icon>
+								<p>All complaints assigned!</p>
+							</div>
+						</div>
+					</mat-card-content>
+				</mat-card>
+			</div>
+		</div>
+
+		<!-- All Complaints View -->
+		<div class="view-content" *ngIf="currentView === 'complaints'">
+			<div class="filters-section">
+				<mat-form-field appearance="outline" class="search-field">
+					<mat-label>Search</mat-label>
+					<input
+						matInput
+						[(ngModel)]="searchQuery"
+						(ngModelChange)="applyFilters()"
+						placeholder="Search by title, ID..."
+					/>
+					<mat-icon matPrefix>search</mat-icon>
+				</mat-form-field>
+				<mat-form-field appearance="outline" class="filter-field">
+					<mat-label>Status</mat-label>
+					<mat-select
+						[(ngModel)]="statusFilter"
+						(ngModelChange)="applyFilters()"
+					>
+						<mat-option value="all">All Status</mat-option>
+						<mat-option value="Open">Open</mat-option>
+						<mat-option value="Assigned">Assigned</mat-option>
+						<mat-option value="In-progress">In Progress</mat-option>
+						<mat-option value="Resolved">Resolved</mat-option>
+						<mat-option value="overdue">Overdue</mat-option>
+					</mat-select>
+				</mat-form-field>
+				<mat-form-field appearance="outline" class="filter-field">
+					<mat-label>Priority</mat-label>
+					<mat-select
+						[(ngModel)]="priorityFilter"
+						(ngModelChange)="applyFilters()"
+					>
+						<mat-option value="all">All Priorities</mat-option>
+						<mat-option *ngFor="let p of PRIORITY_OPTIONS" [value]="p">{{
+							p
+						}}</mat-option>
+					</mat-select>
+				</mat-form-field>
+			</div>
+
+			<div class="complaints-grid">
+				<mat-card
+					*ngFor="let complaint of pagedComplaints"
+					class="complaint-card"
+					[class.overdue]="isOverdue(complaint)"
+					(click)="viewComplaintDetails(complaint)"
+				>
+					<div class="card-header">
+						<span class="complaint-id">#{{ complaint.id }}</span>
+						<span
+							class="status-badge"
+							[style.background]="getStatusColor(complaint.status)"
+							>{{ complaint.status }}</span
+						>
+					</div>
+					<h4 class="complaint-title">{{ complaint.title }}</h4>
+					<div class="card-details">
+						<span class="category"
+							><mat-icon>{{ getCategoryIcon(complaint.category) }}</mat-icon
+							>{{ complaint.category | titlecase }}</span
+						>
+						<span
+							class="priority"
+							[style.color]="getPriorityColor(complaint.priority)"
+							><mat-icon>flag</mat-icon>{{ complaint.priority }}</span
+						>
+					</div>
+					<div class="card-footer">
+						<span class="user"
+							><mat-icon>person</mat-icon>{{ complaint.user_name }}</span
+						>
+						<span class="date">{{ formatDate(complaint.created_at) }}</span>
+					</div>
+					<div class="assigned-info" *ngIf="complaint.staff_name">
+						<mat-icon>engineering</mat-icon>{{ complaint.staff_name }}
+					</div>
+				</mat-card>
+				<div class="empty-state" *ngIf="filteredComplaints.length === 0">
+					<mat-icon>search_off</mat-icon>
+					<p>No complaints found</p>
+				</div>
+			</div>
+			<mat-paginator
+				#complaintsPaginator
+				[length]="filteredComplaints.length"
+				[pageSize]="complaintsPageSize"
+				[pageSizeOptions]="pageSizeOptions"
+				[pageIndex]="complaintsPageIndex"
+				(page)="onComplaintsPageChange($event)"
+				showFirstLastButtons
+				*ngIf="filteredComplaints.length > 0"
+			></mat-paginator>
+		</div>
+
+		<!-- Users View -->
+		<div class="view-content" *ngIf="currentView === 'users'">
+			<div class="users-section">
+				<div class="section-header">
+					<h2>Staff Members</h2>
+					<mat-form-field appearance="outline" class="search-field">
+						<mat-label>Search Staff</mat-label>
+						<input
+							matInput
+							[(ngModel)]="staffSearchQuery"
+							(ngModelChange)="onStaffSearchChange()"
+							placeholder="Search..."
+						/>
+						<mat-icon matPrefix>search</mat-icon>
+					</mat-form-field>
+				</div>
+				<div class="staff-grid">
+					<mat-card *ngFor="let staff of pagedStaffStats" class="staff-card">
+						<div class="staff-header">
+							<div class="avatar"><mat-icon>person</mat-icon></div>
+							<div class="staff-info">
+								<h3>{{ staff.name }}</h3>
+								<p>{{ staff.email }}</p>
+							</div>
+							<div
+								class="workload-badge"
+								[style.backgroundColor]="getWorkloadColor(staff)"
+							>
+								{{ getWorkloadLevel(staff) }}
+							</div>
+						</div>
+						<div class="stats-row">
+							<div class="stat">
+								<span class="num">{{ staff.totalAssigned }}</span
+								><span class="lbl">Assigned</span>
+							</div>
+							<div class="stat resolved">
+								<span class="num">{{ staff.resolved }}</span
+								><span class="lbl">Resolved</span>
+							</div>
+							<div class="stat progress">
+								<span class="num">{{ staff.inProgress }}</span
+								><span class="lbl">In Progress</span>
+							</div>
+							<div class="stat pending">
+								<span class="num">{{ staff.pending }}</span
+								><span class="lbl">Pending</span>
+							</div>
+						</div>
+						<div class="performance-row">
+							<span class="perf-label">Resolution</span>
+							<div class="progress-bar">
+								<div
+									class="fill"
+									[style.width.%]="getResolutionRateForStaff(staff)"
+								></div>
+							</div>
+							<span class="perf-value"
+								>{{ getResolutionRateForStaff(staff) }}%</span
+							>
+						</div>
+						<div class="rating-row">
+							<span class="perf-label">Rating</span>
+							<div class="stars">
+								<mat-icon
+									*ngFor="let star of [1, 2, 3, 4, 5]"
+									[class.filled]="star <= staff.avgRating"
+									>{{
+										star <= staff.avgRating ? "star" : "star_border"
+									}}</mat-icon
+								>
+							</div>
+							<span class="rating-val">{{
+								staff.avgRating > 0
+									? (staff.avgRating | number : "1.1-1")
+									: "N/A"
+							}}</span>
+						</div>
+					</mat-card>
+				</div>
+				<mat-paginator
+					#staffPaginator
+					[length]="filteredStaffStats.length"
+					[pageSize]="staffPageSize"
+					[pageSizeOptions]="pageSizeOptions"
+					[pageIndex]="staffPageIndex"
+					(page)="onStaffPageChange($event)"
+					showFirstLastButtons
+					*ngIf="filteredStaffStats.length > 0"
+				></mat-paginator>
+				<div class="empty-state" *ngIf="filteredStaffStats.length === 0">
+					<mat-icon>person_search</mat-icon>
+					<p>No staff members found</p>
+				</div>
+			</div>
+
+			<div class="users-section">
+				<div class="section-header">
+					<h2>Regular Users</h2>
+					<mat-form-field appearance="outline" class="search-field">
+						<mat-label>Search Users</mat-label>
+						<input
+							matInput
+							[(ngModel)]="userSearchQuery"
+							(ngModelChange)="onUserSearchChange()"
+							placeholder="Search..."
+						/>
+						<mat-icon matPrefix>search</mat-icon>
+					</mat-form-field>
+				</div>
+				<div class="users-table-container">
+					<table mat-table [dataSource]="pagedUsers" class="users-table">
+						<ng-container matColumnDef="avatar">
+							<th mat-header-cell *matHeaderCellDef></th>
+							<td mat-cell *matCellDef="let user">
+								<div class="user-avatar">
+									<mat-icon>account_circle</mat-icon>
+								</div>
+							</td>
+						</ng-container>
+						<ng-container matColumnDef="name">
+							<th mat-header-cell *matHeaderCellDef>Name</th>
+							<td mat-cell *matCellDef="let user">
+								<span class="user-name-cell">{{ user.name }}</span>
+							</td>
+						</ng-container>
+						<ng-container matColumnDef="email">
+							<th mat-header-cell *matHeaderCellDef>Email</th>
+							<td mat-cell *matCellDef="let user">{{ user.email }}</td>
+						</ng-container>
+						<ng-container matColumnDef="complaints">
+							<th mat-header-cell *matHeaderCellDef>Complaints</th>
+							<td mat-cell *matCellDef="let user">
+								<span class="complaint-count">{{
+									getUserComplaintsCount(user.id)
+								}}</span>
+							</td>
+						</ng-container>
+						<ng-container matColumnDef="joined">
+							<th mat-header-cell *matHeaderCellDef>Joined</th>
+							<td mat-cell *matCellDef="let user">
+								{{ formatDateShort(user.created_at) }}
+							</td>
+						</ng-container>
+						<ng-container matColumnDef="actions">
+							<th mat-header-cell *matHeaderCellDef>Actions</th>
+							<td mat-cell *matCellDef="let user">
+								<button
+									mat-icon-button
+									color="primary"
+									matTooltip="Edit User"
+									(click)="editUser(user, $event)"
+								>
+									<mat-icon>edit</mat-icon>
+								</button>
+							</td>
+						</ng-container>
+						<tr
+							mat-header-row
+							*matHeaderRowDef="[
+								'avatar',
+								'name',
+								'email',
+								'complaints',
+								'joined',
+								'actions'
+							]"
+						></tr>
+						<tr
+							mat-row
+							*matRowDef="
+								let row;
+								columns: [
+									'avatar',
+									'name',
+									'email',
+									'complaints',
+									'joined',
+									'actions'
+								]
+							"
+						></tr>
+					</table>
+				</div>
+				<mat-paginator
+					#usersPaginator
+					[length]="filteredUsers.length"
+					[pageSize]="usersPageSize"
+					[pageSizeOptions]="pageSizeOptions"
+					[pageIndex]="usersPageIndex"
+					(page)="onUsersPageChange($event)"
+					showFirstLastButtons
+					*ngIf="filteredUsers.length > 0"
+				></mat-paginator>
+				<div class="empty-state" *ngIf="filteredUsers.length === 0">
+					<mat-icon>person_search</mat-icon>
+					<p>No users found</p>
+				</div>
+			</div>
+		</div>
+	</ng-container>
+
+	<!-- Edit User Dialog -->
+	<div class="edit-user-overlay" *ngIf="editingUser" (click)="cancelEditUser()">
+		<div class="edit-user-dialog" (click)="$event.stopPropagation()">
+			<div class="dialog-header">
+				<h2>Edit User</h2>
+				<button mat-icon-button (click)="cancelEditUser()">
+					<mat-icon>close</mat-icon>
+				</button>
+			</div>
+			<div class="dialog-content">
+				<div class="user-info-display">
+					<mat-icon class="user-icon">account_circle</mat-icon>
+					<div class="user-details">
+						<h3>{{ editingUser.name }}</h3>
+						<p>{{ editingUser.email }}</p>
+					</div>
+				</div>
+
+				<mat-form-field appearance="outline" class="full-width">
+					<mat-label>Role</mat-label>
+					<mat-select [(ngModel)]="editRole">
+						<mat-option *ngFor="let role of roles" [value]="role">
+							{{ role }}
+						</mat-option>
+					</mat-select>
+				</mat-form-field>
+
+				<mat-form-field
+					appearance="outline"
+					class="full-width"
+					*ngIf="editRole === 'Staff'"
+				>
+					<mat-label>Department</mat-label>
+					<mat-select [(ngModel)]="editDepartment" required>
+						<mat-option *ngFor="let dept of departments" [value]="dept">
+							{{ dept }}
+						</mat-option>
+					</mat-select>
+					<mat-hint>Required for staff members</mat-hint>
+				</mat-form-field>
+			</div>
+			<div class="dialog-actions">
+				<button mat-button (click)="cancelEditUser()">Cancel</button>
+				<button
+					mat-raised-button
+					color="primary"
+					(click)="saveUser()"
+					[disabled]="
+						isUpdatingUser || (editRole === 'Staff' && !editDepartment)
+					"
+				>
+					<mat-spinner diameter="20" *ngIf="isUpdatingUser"></mat-spinner>
+					<span *ngIf="!isUpdatingUser">Save Changes</span>
+				</button>
+			</div>
+		</div>
+	</div>
+</div>
