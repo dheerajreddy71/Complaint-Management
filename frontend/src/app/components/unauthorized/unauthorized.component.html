@@ -1,0 +1,30 @@
+<div class="unauthorized-container">
+	<div class="content-box">
+		<div class="icon-wrapper">
+			<mat-icon>lock</mat-icon>
+		</div>
+
+		<h1>Access Denied</h1>
+		<p class="message">You don't have permission to access this page.</p>
+
+		<p class="role-info">
+			Your current role: <span class="role-badge">{{ userRole }}</span>
+		</p>
+
+		<div class="actions">
+			<button mat-raised-button color="primary" (click)="goBack()">
+				<mat-icon>home</mat-icon>
+				Go to Dashboard
+			</button>
+
+			<button mat-stroked-button color="warn" (click)="logout()">
+				<mat-icon>logout</mat-icon>
+				Logout
+			</button>
+		</div>
+
+		<p class="help-text">
+			If you believe this is an error, please contact the administrator.
+		</p>
+	</div>
+</div>
