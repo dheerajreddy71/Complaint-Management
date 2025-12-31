@@ -598,7 +598,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Dheeraj Reddy**
 
 - GitHub: [@dheerajreddy71](https://github.com/dheerajreddy71)
-- Email: dheerajreddy71@example.com
+- Email: byreddydheerajreddy@gmail.com
 
 ## 🙏 Acknowledgments
 
